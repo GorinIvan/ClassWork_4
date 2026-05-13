@@ -3,8 +3,8 @@ package model;
 public class Employee extends User {
     private final String department;
 
-    public Employee(String login, String passwordHash, String fullName, String department) {
-        super(login, passwordHash, fullName);
+    public Employee(String login, String passwordHash, String saltBase64, String fullName, String department) {
+        super(login, passwordHash, saltBase64, fullName);
         this.department = department;
     }
 

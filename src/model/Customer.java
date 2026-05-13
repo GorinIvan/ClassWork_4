@@ -3,8 +3,8 @@ package model;
 public class Customer extends User {
     private final String loyaltyCard;
 
-    public Customer(String login, String passwordHash, String fullName, String loyaltyCard) {
-        super(login, passwordHash, fullName);
+    public Customer(String login, String passwordHash, String saltBase64, String fullName, String loyaltyCard) {
+        super(login, passwordHash, saltBase64, fullName);
         this.loyaltyCard = loyaltyCard;
     }
 

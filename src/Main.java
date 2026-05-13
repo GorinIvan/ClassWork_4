@@ -44,22 +44,26 @@ public class Main {
 
         System.out.print("Логин: ");
         String login = scanner.nextLine();
-        String password = readPassword(scanner);
+        char[] password = readPassword(scanner);
         System.out.print("ФИО: ");
         String fullName = scanner.nextLine();
 
         boolean ok;
-        if ("1".equals(role)) {
-            System.out.print("Отдел: ");
-            String department = scanner.nextLine();
-            ok = authService.registerEmployee(login, password, fullName, department);
-        } else if ("2".equals(role)) {
-            System.out.print("Номер карты лояльности: ");
-            String loyaltyCard = scanner.nextLine();
-            ok = authService.registerCustomer(login, password, fullName, loyaltyCard);
-        } else {
-            System.out.println("Неизвестная роль.");
-            return;
+        try {
+            if ("1".equals(role)) {
+                System.out.print("Отдел: ");
+                String department = scanner.nextLine();
+                ok = authService.registerEmployee(login, password, fullName, department);
+            } else if ("2".equals(role)) {
+                System.out.print("Номер карты лояльности: ");
+                String loyaltyCard = scanner.nextLine();
+                ok = authService.registerCustomer(login, password, fullName, loyaltyCard);
+            } else {
+                System.out.println("Неизвестная роль.");
+                return;
+            }
+        } finally {
+            Arrays.fill(password, '\0');
         }
 
         System.out.println(ok ? "Регистрация успешна." : "Пользователь с таким логином уже существует.");
@@ -68,9 +72,14 @@ public class Main {
     private static void login(AuthService authService, Scanner scanner) {
         System.out.print("Логин: ");
         String login = scanner.nextLine();
-        String password = readPassword(scanner);
+        char[] password = readPassword(scanner);
 
-        User user = authService.authorize(login, password);
+        User user;
+        try {
+            user = authService.authorize(login, password);
+        } finally {
+            Arrays.fill(password, '\0');
+        }
         if (user == null) {
             System.out.println("Неверный логин или пароль.");
             return;
@@ -81,15 +90,12 @@ public class Main {
         user.showMenu();
     }
 
-    private static String readPassword(Scanner scanner) {
+    private static char[] readPassword(Scanner scanner) {
         Console console = System.console();
         if (console != null) {
-            char[] passwordChars = console.readPassword("Пароль: ");
-            String password = new String(passwordChars);
-            Arrays.fill(passwordChars, '\0');
-            return password;
+            return console.readPassword("Пароль: ");
         }
         System.out.print("Пароль: ");
-        return scanner.nextLine();
+        return scanner.nextLine().toCharArray();
     }
 }
