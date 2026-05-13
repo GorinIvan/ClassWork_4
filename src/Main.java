@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
+    private static final String ROLE_EMPLOYEE = "EMPLOYEE";
+    private static final String ROLE_CUSTOMER = "CUSTOMER";
+
     public static void main(String[] args) {
         AuthService authService = new AuthService();
         try (Scanner scanner = new Scanner(System.in)) {
@@ -87,7 +90,29 @@ public class Main {
 
         System.out.println(user.getGreeting());
         System.out.println("Роль: " + user.getRole());
-        user.showMenu();
+        boolean loggedIn = true;
+        while (loggedIn) {
+            user.showMenu();
+            System.out.print("Выберите пункт: ");
+            String choice = scanner.nextLine();
+            switch (choice) {
+                case "1":
+                    if (ROLE_EMPLOYEE.equals(user.getRole())) {
+                        System.out.println("Список задач отдела пока недоступен.");
+                    } else if (ROLE_CUSTOMER.equals(user.getRole())) {
+                        System.out.println("Список заказов пока недоступен.");
+                    } else {
+                        System.out.println("Неизвестная роль.");
+                    }
+                    break;
+                case "2":
+                    loggedIn = false;
+                    break;
+                default:
+                    System.out.println("Неверный выбор. Доступные варианты: 1 или 2.");
+                    break;
+            }
+        }
     }
 
     private static char[] readPassword(Scanner scanner) {
