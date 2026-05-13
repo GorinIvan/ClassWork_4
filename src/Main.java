@@ -1,6 +1,8 @@
 import model.User;
 import service.AuthService;
 
+import java.io.Console;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Main {
@@ -42,8 +44,7 @@ public class Main {
 
         System.out.print("Логин: ");
         String login = scanner.nextLine();
-        System.out.print("Пароль: ");
-        String password = scanner.nextLine();
+        String password = readPassword(scanner);
         System.out.print("ФИО: ");
         String fullName = scanner.nextLine();
 
@@ -67,8 +68,7 @@ public class Main {
     private static void login(AuthService authService, Scanner scanner) {
         System.out.print("Логин: ");
         String login = scanner.nextLine();
-        System.out.print("Пароль: ");
-        String password = scanner.nextLine();
+        String password = readPassword(scanner);
 
         User user = authService.authorize(login, password);
         if (user == null) {
@@ -79,5 +79,17 @@ public class Main {
         System.out.println(user.getGreeting());
         System.out.println("Роль: " + user.getRole());
         user.showMenu();
+    }
+
+    private static String readPassword(Scanner scanner) {
+        Console console = System.console();
+        if (console != null) {
+            char[] passwordChars = console.readPassword("Пароль: ");
+            String password = new String(passwordChars);
+            Arrays.fill(passwordChars, '\0');
+            return password;
+        }
+        System.out.print("Пароль: ");
+        return scanner.nextLine();
     }
 }

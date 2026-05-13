@@ -58,14 +58,19 @@ public class AuthService {
     }
 
     private String hashPassword(String password, String saltBase64) {
+        PBEKeySpec spec = null;
         try {
             byte[] salt = Base64.getDecoder().decode(saltBase64);
-            PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
+            spec = new PBEKeySpec(password.toCharArray(), salt, ITERATIONS, KEY_LENGTH);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = factory.generateSecret(spec).getEncoded();
             return Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new IllegalStateException("Password hashing failed", e);
+        } finally {
+            if (spec != null) {
+                spec.clearPassword();
+            }
         }
     }
 }
