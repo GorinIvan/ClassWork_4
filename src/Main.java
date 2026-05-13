@@ -1,5 +1,6 @@
 import model.User;
 import service.AuthService;
+import service.BinaryStorageService;
 
 import java.io.Console;
 import java.util.Arrays;
@@ -8,16 +9,30 @@ import java.util.Scanner;
 public class Main {
     private static final String ROLE_EMPLOYEE = "EMPLOYEE";
     private static final String ROLE_CUSTOMER = "CUSTOMER";
+    private static final String DATA_FILE = "users.dat";
+    private static final long AUTO_SAVE_INTERVAL_SECONDS = 30;
 
     public static void main(String[] args) {
+        BinaryStorageService storage = new BinaryStorageService(DATA_FILE);
         AuthService authService = new AuthService();
+
+        // Load saved data from binary file
+        authService.setUsers(storage.load());
+        System.out.println("Данные загружены из файла.");
+
+        // Start background auto-save
+        storage.startAutoSave(authService::getUsers, AUTO_SAVE_INTERVAL_SECONDS);
+
         try (Scanner scanner = new Scanner(System.in)) {
             boolean running = true;
             while (running) {
                 System.out.println("\n=== Главное меню ===");
                 System.out.println("1. Регистрация");
                 System.out.println("2. Авторизация");
-                System.out.println("3. Выход");
+                System.out.println("3. Удалить пользователя");
+                System.out.println("4. Отменить последнее действие");
+                System.out.println("5. Сохранить данные");
+                System.out.println("6. Выход");
                 System.out.print("Выберите пункт: ");
                 String choice = scanner.nextLine();
 
@@ -29,6 +44,16 @@ public class Main {
                         login(authService, scanner);
                         break;
                     case "3":
+                        deleteUser(authService, scanner);
+                        break;
+                    case "4":
+                        System.out.println(authService.undo());
+                        break;
+                    case "5":
+                        storage.save(authService.getUsers());
+                        System.out.println("Данные сохранены.");
+                        break;
+                    case "6":
                         running = false;
                         break;
                     default:
@@ -36,6 +61,11 @@ public class Main {
                 }
             }
         }
+
+        // Save data and stop auto-save on exit
+        storage.save(authService.getUsers());
+        storage.stopAutoSave();
+        System.out.println("Данные сохранены. До свидания!");
     }
 
     private static void register(AuthService authService, Scanner scanner) {
@@ -70,6 +100,13 @@ public class Main {
         }
 
         System.out.println(ok ? "Регистрация успешна." : "Пользователь с таким логином уже существует.");
+    }
+
+    private static void deleteUser(AuthService authService, Scanner scanner) {
+        System.out.print("Логин пользователя для удаления: ");
+        String login = scanner.nextLine();
+        boolean ok = authService.deleteUser(login);
+        System.out.println(ok ? "Пользователь удалён." : "Пользователь с таким логином не найден.");
     }
 
     private static void login(AuthService authService, Scanner scanner) {
@@ -124,3 +161,4 @@ public class Main {
         return scanner.nextLine().toCharArray();
     }
 }
+

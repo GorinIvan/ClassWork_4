@@ -1,6 +1,9 @@
 package model;
 
-public abstract class User {
+import java.io.Serializable;
+
+public abstract class User implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final String login;
     private final String passwordHash;
     private final String saltBase64;
