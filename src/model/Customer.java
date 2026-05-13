@@ -1,6 +1,7 @@
 package model;
 
 public class Customer extends User {
+    private static final long serialVersionUID = 1L;
     private final String loyaltyCard;
 
     public Customer(String login, String passwordHash, String saltBase64, String fullName, String loyaltyCard) {

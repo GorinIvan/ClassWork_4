@@ -11,24 +11,51 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AuthService {
     private static final int ITERATIONS = 65536;
     private static final int KEY_LENGTH = 256;
     private static final int SALT_LENGTH = 16;
 
-    private final Map<String, User> users = new HashMap<>();
+    private enum ActionType { ADD, DELETE }
+
+    private static final class UndoEntry {
+        final ActionType type;
+        final String login;
+        final User user;
+
+        UndoEntry(ActionType type, String login, User user) {
+            this.type = type;
+            this.login = login;
+            this.user = user;
+        }
+    }
+
+    private final Map<String, User> users = new ConcurrentHashMap<>();
+    private final Deque<UndoEntry> undoStack = new ArrayDeque<>();
+    private final Object undoLock = new Object();
+
+    public void setUsers(Map<String, User> loaded) {
+        users.clear();
+        users.putAll(loaded);
+    }
+
+    public Map<String, User> getUsers() {
+        return Collections.unmodifiableMap(users);
+    }
 
     public boolean registerEmployee(String login, char[] password, String fullName, String department) {
         if (users.containsKey(login)) {
             return false;
         }
         String salt = generateSalt();
-        users.put(login, new Employee(login, hashPassword(password, salt), salt, fullName, department));
+        User user = new Employee(login, hashPassword(password, salt), salt, fullName, department);
+        users.put(login, user);
+        synchronized (undoLock) {
+            undoStack.push(new UndoEntry(ActionType.ADD, login, user));
+        }
         return true;
     }
 
@@ -37,8 +64,39 @@ public class AuthService {
             return false;
         }
         String salt = generateSalt();
-        users.put(login, new Customer(login, hashPassword(password, salt), salt, fullName, loyaltyCard));
+        User user = new Customer(login, hashPassword(password, salt), salt, fullName, loyaltyCard);
+        users.put(login, user);
+        synchronized (undoLock) {
+            undoStack.push(new UndoEntry(ActionType.ADD, login, user));
+        }
         return true;
+    }
+
+    public boolean deleteUser(String login) {
+        User removed = users.remove(login);
+        if (removed == null) {
+            return false;
+        }
+        synchronized (undoLock) {
+            undoStack.push(new UndoEntry(ActionType.DELETE, login, removed));
+        }
+        return true;
+    }
+
+    public String undo() {
+        synchronized (undoLock) {
+            if (undoStack.isEmpty()) {
+                return "Нет действий для отмены.";
+            }
+            UndoEntry entry = undoStack.pop();
+            if (entry.type == ActionType.ADD) {
+                users.remove(entry.login);
+                return "Отменено добавление пользователя: " + entry.login;
+            } else {
+                users.put(entry.login, entry.user);
+                return "Отменено удаление пользователя: " + entry.login;
+            }
+        }
     }
 
     public User authorize(String login, char[] password) {
@@ -82,3 +140,4 @@ public class AuthService {
         }
     }
 }
+
