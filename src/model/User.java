@@ -2,12 +2,12 @@ package model;
 
 public abstract class User {
     private final String login;
-    private final String password;
+    private final String passwordHash;
     private final String fullName;
 
-    protected User(String login, String password, String fullName) {
+    protected User(String login, String passwordHash, String fullName) {
         this.login = login;
-        this.password = password;
+        this.passwordHash = passwordHash;
         this.fullName = fullName;
     }
 
@@ -15,8 +15,8 @@ public abstract class User {
         return login;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public String getFullName() {
